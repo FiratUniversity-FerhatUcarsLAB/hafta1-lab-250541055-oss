@@ -2,3 +2,107 @@
 AD-SOYAD:
 
 Lütfen seçtiğiniz algoritmaya ait çözümü ve diğer isterleri aşağıya ekleyiniz:
+FONKSIYON EN_IYI_HAMLE_SECIMI():
+    // **Oyun Durumu Girdileri**
+    Girdi: OYUNCU_BILGILERI {} (Nakit, MevcutKonum, SahipOlunanTapular[], EvSayilari[])
+    Girdi: RAKIP_BILGILERI [] (RakipNakit, RakipTapular, RakipEvSayilari)
+    Girdi: BANKA_BILGILERI [] (Hala Satilik Tapular, EvFiyati)
+    Girdi: ZAR_SONUCU (1-12)
+
+    // **Başlatma**
+    GUNCEL_NET_DEGER = OYUNCU_BILGILERI.Nakit + TAPULARIN_DEGERI_HESAPLA(OYUNCU_BILGILERI.SahipOlunanTapular)
+    EN_IYI_KARAR = "Pas Geç"
+    MAKS_BEKLENEN_DEGER = GUNCEL_NET_DEGER
+    
+    // **Olası Hamleleri Tanımla**
+    OLASI_KARARLAR_LISTESI = ["Pas Geç", "Tapu Al/İhale Et", "Ev İnşa Et", "İpotek Koy/Çöz", "Tapu Takası Teklif Et"]
+YENI_KONUM = (OYUNCU_BILGILERI.MevcutKonum + ZAR_SONUCU) MOD 40
+
+    // **Geldikçe Kontrol Et**
+    EĞER YENI_KONUM == "Ceza Evi"
+        CIKTI: "Ceza Evi Hamlesi Gerekli."
+        // Ceza Evi için özel koşullar burada işlenir.
+        DÖN (CEZA_EVI_KARARI_AL(OYUNCU_BILGILERI))
+        
+    EĞER YENI_KONUM Bankaya Ait Bir Tapu İSE
+        TAPU_ADI = YENI_KONUM
+        FIYAT = TAPULARIN_FIYATI[TAPU_ADI]
+
+        // **********************************************
+        // 2.1. Satın Alma Kararı (Risk ve Bütçe Koşulları)
+        // **********************************************
+        EĞER OYUNCU_BILGILERI.Nakit >= FIYAT * 1.5 VEYA (TAPU_ADI Bir Renk Grubunu Tamamlıyorsa)
+            CIKTI: "Tapu satın alma kararı değerlendiriliyor."
+            YENI_DEGER = OYUNCU_BILGILERI.Nakit - FIYAT + TAPULARIN_DEGERI_HESAPLA([TAPU_ADI]) // Net Değer hesapla
+            EĞER YENI_DEGER > MAKS_BEKLENEN_DEGER
+                MAKS_BEKLENEN_DEGER = YENI_DEGER
+                EN_IYI_KARAR = "Tapu Al: " + TAPU_ADI
+        DEĞİLSE
+            CIKTI: "İhaleye çıkma ya da pas geçme kararı değerlendiriliyor."
+            EKLE("İhale Et", OLASI_KARARLAR_LISTESI) // İhale, ek bir karar olarak eklenir.
+
+    DEĞİLSE EĞER YENI_KONUM Rakibe Ait Bir Tapu İSE
+        KIRA = KIRA_HESAPLA(YENI_KONUM, RAKIP_BILGILERI)
+        // Kira ödemesi yapılır. Hamle sonrası kararlar değerlendirilir.
+        OYUNCU_BILGILERI.Nakit = OYUNCU_BILGILERI.Nakit - KIRA
+        GUNCEL_NET_DEGER = GUNCEL_NET_DEGER - KIRA
+ // **Tapu Durumuna Göre Karar Arayışı**
+    HER BIR OLASI_KARAR IÇIN OLASI_KARARLAR_LISTESI'NDE:
+        
+        BEKLENEN_DEGER = GUNCEL_NET_DEGER // Başlangıç değeri güncel net değer
+
+        // **********************************************
+        // 3.1. Ev İnşa Etme Kararı (En Yüksek Kira Potansiyeli)
+        // **********************************************
+        EĞER OLASI_KARAR == "Ev İnşa Et"
+            // Oyuncunun sahip olduğu tam renklere odaklan
+            HER BIR TAM_RENK_GRUBU IÇIN OYUNCU_BILGILERI.SahipOlunanTapular'DA:
+                
+                // KOŞUL: Eğer oyuncunun bütçesi en az 3 ev yapmaya yetiyorsa (Optimal blokaj)
+                EĞER OYUNCU_BILGILERI.Nakit >= (3 * EvFiyati * TAM_RENK_GRUBU.TapuSayisi)
+                    
+                    // SORGULAMA: Ev yapmanın ortalama getirisini hesapla
+                    GETIRI_OLASILIGI = EV_YAPMA_GETIRISI_HESAPLA(TAM_RENK_GRUBU) 
+                    
+                    EĞER GETIRI_OLASILIGI > 1.5 // (1.5: Yatırımın 1.5 katı kira geliri bekleniyor)
+                        // Bu, en iyi yatırım hamlesidir
+                        BEKLENEN_DEGER = GUNCEL_NET_DEGER + GETIRI_OLASILIGI 
+                        
+                        EĞER BEKLENEN_DEGER > MAKS_BEKLENEN_DEGER
+                            MAKS_BEKLENEN_DEGER = BEKLENEN_DEGER
+                            EN_IYI_KARAR = "Ev İnşa Et: " + TAM_RENK_GRUBU + " Grubuna 3 Ev"
+                        KIR // En iyi hamle bulunduğunda döngüyü sonlandır
+
+        // **********************************************
+        // 3.2. Tapu Takası Kararı (Tekel Oluşturma)
+        // **********************************************
+        EĞER OLASI_KARAR == "Tapu Takası Teklif Et"
+            // Rakiplerin tapularını gözden geçir
+            HER BIR RAKIP IÇIN RAKIP_BILGILERI'NDE:
+                // KOŞUL: Eğer rakibin tapusu benim bir renk grubumu tamamlıyorsa
+                EĞER RAKIP.Tapular Bir Renk Grubu Için KRITIK_TAPU İSE
+                    // SORGULAMA: Teklifin maliyetini (Mevcut tapu değeri + Nakit) ve getiriyi (Yeni kira geliri) hesapla.
+                    YENI_KIRA_POTANSIYELI = YENI_TEKEL_KIRA_HESAPLA(KRITIK_TAPU)
+                    
+                    EĞER YENI_KIRA_POTANSIYELI > (GUNCEL_NET_DEGER * 0.1) // %10'dan fazla değer katıyorsa
+                        // Takas yapma kararı cazip
+                        BEKLENEN_DEGER = GUNCEL_NET_DEGER + YENI_KIRA_POTANSIYELI
+                        EĞER BEKLENEN_DEGER > MAKS_BEKLENEN_DEGER
+                            MAKS_BEKLENEN_DEGER = BEKLENEN_DEGER
+                            EN_IYI_KARAR = "Takas Teklif Et: " + KRITIK_TAPU + " için Rakibe Adil Teklif"
+
+        // **********************************************
+        // 3.3. İpotek Koyma Kararı (Nakit Sıkışıklığı)
+        // **********************************************
+        EĞER OLASI_KARAR == "İpotek Koy/Çöz" VE OYUNCU_BILGILERI.Nakit < 200 // Nakit krizi
+            // KOŞUL: En az kirası olan veya tam grubu bozmayan tapuyu ipotek et
+            IPOTEK_EDILECEK_TAPU = BUL_EN_AZ_GETIRILI_TAPU(OYUNCU_BILGILERI.SahipOlunanTapular)
+            
+            EĞER IPOTEK_EDILECEK_TAPU Var İSE
+                // Risk azaltma hamlesi
+CIKTI: "En iyi hamle seçimi tamamlandı."
+    DÖN (EN_IYI_KARAR, MAKS_BEKLENEN_DEGER)
+                BEKLENEN_DEGER = GUNCEL_NET_DEGER + IPOTEK_DEGERI(IPOTEK_EDILECEK_TAPU) 
+                EĞER BEKLENEN_DEGER > MAKS_BEKLENEN_DEGER // İpotek parasıyla ceza evinden çıkma gibi bir hamle değeri artırabilir.
+                    MAKS_BEKLENEN_DEGER = BEKLENEN_DEGER
+                    EN_IYI_KARAR = "İpotek Koy: " + IPOTEK_EDILECEK_TAPU
