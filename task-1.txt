@@ -3,9 +3,37 @@ AD-SOYAD: 250541055
 
 Lütfen seçtiğiniz algoritmaya ait çözümü ve diğer isterleri aşağıya ekleyiniz:
 Kod snippet'i
+FONKSIYON OPTIMIZE_PLAN_OLUSTUR():
+    // **Girdi Parametreleri**
+    Girdi: SINAV_TARIHI (YYYY-MM-DD)
+    Girdi: KONU_LISTESI [] (Örn: ["Cebir", "Organik Kimya", "Edebiyat Akımları"])
+    Girdi: KONU_ZORLUK_SEVIYELERI {} (Örn: {"Cebir": "Yüksek", "Kimya": "Orta", "Edebiyat": "Düşük"})
+    Girdi: HEDEF_GUNLUK_SAAT (Saat, Çalışmaya Ayrılması Planlanan Süre)
+    Girdi: HAFTALIK_DENEME_SINAVI_GUNU (Örn: "Cumartesi")
 
-    // **Ana Döngü: Sınav Tarihine Kadar İlerle**
-    DÖNGÜ GUNCEL_TARIH < SINAV_TARIHI OLDUĞU SÜRECE:
+
+    // **Kalan Gün Sayısına Göre Plan Stratejisi**
+    EĞER KALAN_GUN <= 21 // 3 Hafta veya daha az kaldı
+        PLAN_STRATEJISI = "KRITIK_YOGUN"
+        // Yoğun günlerde süre artırılır, ancak deneme sınavı zorunlu hale gelir.
+        YOGUNLUK_CARPANI = 1.2
+    DEĞİLSE EĞER KALAN_GUN <= 60 // 2 Aydan az kaldı
+        PLAN_STRATEJISI = "STANDART_ODAK"
+        YOGUNLUK_CARPANI = 1.0
+    DEĞİLSE
+        PLAN_STRATEJISI = "ESNEK_TEMEL"
+        YOGUNLUK_CARPANI = 0.8 // Başlangıçta daha esnek ol
+
+    // **Zorluk Seviyesine Göre Çalışma Oranlarını Belirle**
+    ORANLAR = {"Yüksek": 0.50, "Orta": 0.35, "Düşük": 0.15} // Zor konulara %50 pay
+    // **Değişkenlerin Başlatılması**
+    BUGUN = Bugünün Tarihi
+    KALAN_GUN = SINAV_TARIHI - BUGUN
+    CALISMA_PLANI = [] // Günlük planların tutulacağı ana liste
+    GUNCEL_TARIH = BUGUN
+
+// **Ana Döngü: Sınav Tarihine Kadar İlerle**
+DÖNGÜ GUNCEL_TARIH < SINAV_TARIHI OLDUĞU SÜRECE:
         GUNLUK_CALISMA_BUTCESI = HEDEF_GUNLUK_SAAT * YOGUNLUK_CARPANI // Yoğunluk ayarı
         GUNUN_PLANI = []
         CALISILAN_SURE_SAYACI = 0
