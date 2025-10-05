@@ -1,4 +1,93 @@
-Öğrenci No:
-AD-SOYAD:
+Öğrenci No: Hayat Ay
+AD-SOYAD:250541055
 
 Lütfen seçtiğiniz algoritmaya ait çözümü ve diğer isterleri aşağıya ekleyiniz:
+FONKSIYON KOLEKSIYON_DUZENLE():
+    // **Girdiler**
+    Girdi: MUZIK_DOSYALARI_LISTESI [] (Tüm müzik dosyaları, her biri bir nesne {DosyaAdı, Sanatçı, Albüm, Tür, Süre, Boyut, Puan} içerir)
+    Girdi: MIN_PUAN_ESIGI (Kullanıcının belirlediği minimum puan, Örn: 3/5)
+    
+    // **Başlatma**
+    TEMIZLENMIS_LISTE = []
+    YINELENENLER_LISTESI = []
+    DUZENLEME_RAPORU = {}
+// **Ana Döngü: Her dosya üzerinde kontrol yap**
+    HER BIR DOSYA IÇIN MUZIK_DOSYALARI_LISTESI'NDE:
+        
+        KARAR = "Koru" // Varsayılan karar korumaktır
+
+        // **********************************************
+        // 2.1. Koşullu Kontrol: Eksik Meta Veri Tespiti (If-Else)
+        // **********************************************
+        EĞER DOSYA.Sanatçı == "Bilinmiyor" VEYA DOSYA.Albüm == "" VEYA DOSYA.Tür == ""
+            CIKTI: "UYARI: Eksik meta veri bulundu - " + DOSYA.DosyaAdı
+            // Varsayılan değerlerle güncelleme
+            DOSYA.Sanatçı = "Tanımsız Sanatçı" 
+            DOSYA.Tür = "Bilinmeyen"
+            DUZENLEME_RAPORU.EksikMetaSayısı = DUZENLEME_RAPORU.EksikMetaSayısı + 1
+        
+        // **********************************************
+        // 2.2. Koşullu Kontrol: Düşük Puan Filtresi (If-Else)
+        // **********************************************
+        EĞER DOSYA.Puan < MIN_PUAN_ESIGI VEYA DOSYA.Boyut > 100MB // Çok büyük dosya veya düşük puan
+            KARAR = "Arşivle" 
+            DUZENLEME_RAPORU.ArşivlenenSayısı = DUZENLEME_RAPORU.ArşivlenenSayısı + 1
+        
+        // **********************************************
+        // 2.3. Koşullu Kontrol: Yinelenen Tespiti (Arama Algoritması Temeli)
+        // **********************************************
+        // Bu adım, yinelenen arama mantığının temelidir (Linear Search)
+        EĞER DOSYA.DosyaAdı DAHA_ÖNCE_TEMIZLENMIS_LISTE'DE_BULUNUYOR İSE
+            // Daha karmaşık kontrol: Sanatçı, Süre ve DosyaAdı eşleşiyorsa
+            RAKIP_DOSYA = BUL(TEMIZLENMIS_LISTE, DOSYA.Sanatçı, DOSYA.Süre)
+            
+            EĞER RAKIP_DOSYA Var İSE
+                // Yinelenen bulundu: Daha küçük boyutlu veya düşük puanlıyı silme kararı
+                EĞER DOSYA.Boyut < RAKIP_DOSYA.Boyut // Daha düşük kaliteliyi sil
+                    EKLE(YINELENENLER_LISTESI, DOSYA.DosyaAdı)
+                    KARAR = "Sil"
+                DEĞİLSE
+                    EKLE(YINELENENLER_LISTESI, RAKIP_DOSYA.DosyaAdı)
+                    KALDIR(TEMIZLENMIS_LISTE, RAKIP_DOSYA) // Eski kaydı listeden kaldır
+                    EKLE(TEMIZLENMIS_LISTE, DOSYA) // Yenisini listeye ekle
+                    KARAR = "Silindi, Yerine Güncellendi"
+            
+        // **********************************************
+        // 2.4. Nihai Karar ve Liste Güncelleme
+        // **********************************************
+        EĞER KARAR == "Koru" VEYA KARAR == "Silindi, Yerine Güncellendi"
+            EKLE(TEMIZLENMIS_LISTE, DOSYA)
+        DEĞİLSE EĞER KARAR == "Arşivle" VEYA KARAR == "Sil"
+            // Gerçek dosya silme/taşıma işlemi burada tetiklenir
+            CIKTI: KARAR + ": " + DOSYA.DosyaAdı + " dosyası işlendi."
+
+    DÖNGÜ_SONU
+ // **Kullanıcıdan Sıralama Kriterini Al**
+    Girdi: SIRALAMA_KRITERI (Örn: "Sanatçı", "Albüm", "Puan", "Süre")
+    
+    // **Sıralama İşlemi**
+    // Bu adım, Bubble Sort, Merge Sort veya Quick Sort gibi bir sıralama algoritmasının temelini temsil eder.
+    
+    // Varsayım: Sıralama işlemi, Seçilen kriter'e göre yapılır.
+    SIRALI_LISTE = SIRALA(TEMIZLENMIS_LISTE, SIRALAMA_KRITERI, "Artan" VEYA "Azalan") 
+    
+    // **Örnek Döngü: En Yüksek Puanlı İlk 10'u Bulma** (Arama ve Sıralama Kombinasyonu)
+    EĞER SIRALAMA_KRITERI == "Puan"
+        // Puanlara göre azalan sırada sıralandığı varsayılır (Bubble/Quick Sort)
+        
+        CIKTI: "--- EN İYİ 10 ŞARKI ---"
+        SAYAC = 0
+        
+        HER BIR SARKI IÇIN SIRALI_LISTE'DE:
+            EĞER SAYAC < 10
+                CIKTI: SAYAC + 1 + ". " + SARKI.Sanatçı + " - " + SARKI.DosyaAdı + " (" + SARKI.Puan + ")"
+                SAYAC = SAYAC + 1
+            DEĞİLSE
+                KIR // İlk 10 bulunduğunda döngüyü sonlandır
+
+    DÖNGÜ_SONU
+
+// **********************************************
+// 4. Çıktı
+// **********************************************
+SONUC: DUZENLEME_RAPORU'nu (Kaç dosya silindi, kaçı arşivlendi) ve SIRALI_LISTE'yi kullanıcıya sun.
