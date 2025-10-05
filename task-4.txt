@@ -1,4 +1,82 @@
-Öğrenci No:
-AD-SOYAD:
+Öğrenci No: Hayat Ay
+AD-SOYAD:250541055
 
 Lütfen seçtiğiniz algoritmaya ait çözümü ve diğer isterleri aşağıya ekleyiniz:
+FONKSIYON LEGO_INSAAT_PLANI_OLUSTUR():
+    // **Girdi: Hedef Şeklin Soyut Temsili**
+    Girdi: HEDEF_SEKIL {} (Örn: {"Adı": "Roket", "Boyut": [10, 5, 5], "Parçalar": ["Gövde", "Kanat", "Burun"]})
+    Girdi: MEVCUT_LEGO_ENVANTERI [] (Örn: [{Renk: "Kırmızı", Boyut: "2x4", Adet: 25}, ...])
+    
+    // **Başlatma**
+    INSAAT_PLANI = [] // Yapım adımlarının listesi
+    KALAN_ENVANTER = MEVCUT_LEGO_ENVANTERI
+ // **BÖL: Ana Şekli Alt Modüllere Ayır**
+    // Roket Örneği İçin: Gövde, İtici Güç, Burun Konisi
+    MODULLER_LISTESI = AYRISTIR(HEDEF_SEKIL) 
+
+    // **Döngü: Her modülün inşaatını planla**
+    HER BIR MODUL IÇIN MODULLER_LISTESI'NDE:
+        
+        // **********************************************
+        // 2.1. Fethetme Fonksiyonunu Çağır (Özyinelemeli Mantık)
+        // **********************************************
+        // Her modülü inşa etmek için ayrı bir alt fonksiyona geçilir.
+        MODUL_INSAAT_ADIMLARI, KALAN_ENVANTER = MODUL_INSA_ET(MODUL, KALAN_ENVANTER)
+        
+        EĞER MODUL_INSAAT_ADIMLARI == "BAŞARISIZ"
+            INSAAT_BASARILI = YANLIŞ
+            EKLE(INSAAT_PLANI, "HATA: " + MODUL.Adı + " için yeterli parça bulunamadı.")
+            KIR // Ana inşaat başarısız oldu, döngüyü sonlandır
+
+        EKLE(INSAAT_PLANI, MODUL.Adı + " Yapım Adımları:")
+        BIRLESTIR(INSAAT_PLANI, MODUL_INSAAT_ADIMLARI) // Ana plana modül adımlarını ekle
+    
+    DÖNGÜ_SONU
+    
+    // **BİRLEŞTİR: Tüm modüller inşa edildikten sonra son montaj adımı**
+    EĞER INSAAT_BASARILI == DOĞRU
+        EKLE(INSAAT_PLANI, "ADIM SON: Tüm modülleri birleştirerek " + HEDEF_SEKIL.Adı + " oluştur.")
+    
+    DÖN (INSAAT_PLANI)
+FONKSIYON MODUL_INSA_ET(MODUL, ENVANTER):
+    GEREKEN_PARCALAR = MODUL.GerekenParçalar
+    MODUL_ADIMLARI = []
+    
+    // **Döngü: Gerekli her parça için envanteri kontrol et**
+    HER BIR GEREKEN_PARCA IÇIN GEREKEN_PARCALAR'DA:
+        
+        BULUNDU = YANLIŞ
+        
+        // **Döngü: Envanterdeki tüm parçaları dolaş (Arama Algoritması Temeli)**
+        HER BIR ENVANTER_PARCASI IÇIN ENVANTER'DE:
+            
+            // **********************************************
+            // 3.1. Koşullu Seçim: Renk ve Boyut Kontrolü (If-Else)
+            // **********************************************
+            EĞER ENVANTER_PARCASI.Renk == GEREKEN_PARCA.Renk VEYA GEREKEN_PARCA.Renk == "Fark Etmez"
+                EĞER ENVANTER_PARCASI.Boyut == GEREKEN_PARCA.Boyut VEYA (ENVANTER_PARCASI.Boyut == "2x4" VE GEREKEN_PARCA.Boyut == "2x2") // Esnek Parça Kuralı
+                    EĞER ENVANTER_PARCASI.Adet > 0
+                        
+                        // **KOŞUL: Optimal Parça Seçimi (Maliyetten Kaçınma)**
+                        // 2x4 istendiğinde, 2x4 kullanmak 2x2 kullanmaktan daha iyidir.
+                        EĞER ENVANTER_PARCASI.Boyut == GEREKEN_PARCA.Boyut
+                            SECILEN_PARCA = ENVANTER_PARCASI
+                            BULUNDU = DOĞRU
+                            KIR // En iyi parça bulundu, döngüyü sonlandır
+                        // DEĞİLSE, daha az optimal olsa da kullan
+                        DEĞİLSE EĞER BULUNDU == YANLIŞ
+                            SECILEN_PARCA = ENVANTER_PARCASI 
+                            BULUNDU = DOĞRU
+                            
+        // **********************************************
+        // 3.2. Parça Kullanımı ve Envanter Güncelleme
+        // **********************************************
+        EĞER BULUNDU == DOĞRU
+            EKLE(MODUL_ADIMLARI, "Kullan: " + SECILEN_PARCA.Renk + " " + SECILEN_PARCA.Boyut + " parça.")
+            ENVANTER = ENVANTER_AZALT(ENVANTER, SECILEN_PARCA, 1) // Envanteri güncelle
+        DEĞİLSE
+            DÖN ("BAŞARISIZ", ENVANTER) // Parça bulunamadı
+            
+    DÖNGÜ_SONU
+    
+    DÖN (MODUL_ADIMLARI, ENVANTER)
