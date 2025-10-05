@@ -1,4 +1,70 @@
-Öğrenci No:
-AD-SOYAD:
+Öğrenci No:Hayat Ay
+AD-SOYAD:250541055
 
 Lütfen seçtiğiniz algoritmaya ait çözümü ve diğer isterleri aşağıya ekleyiniz:
+Ad /	Açıklama	 / Tür
+MAX_KAPASITE /   Bir otobüsün maksimum yolcu kapasitesi (Örn: 50)	/   Sabit Sayı
+SeferSaatleri  /	Planlanan tüm otobüs kalkış saatlerini tutan liste/dizi (Örn: ["08:00", "09:30", "11:00"])/  Liste
+OgrenciListesi  /	Her öğrencinin ders başlama saatini içeren liste/dizi. (ogrenci_id, ders_saati)   /	Liste (Objeler)
+AtananSeferler  /	Her bir sefer saati için atanacak otobüs sayısını tutan sözlük/harita  /	Sözlük/Harita
+saat /	Mevcut döngüde işlenen sefer saati	/ Zaman
+yakın_ogrenci_sayisi /	Mevcut saat'e en yakın dersi olan öğrenci sayısı /	Sayı
+otobus_sayisi /	Hesaplanan otobüs sayısı  / Sayı
+
+PROSEDUR OtobusGonderiminiPlanla(SeferSaatleri, OgrenciListesi, MAX_KAPASITE)
+    // 1. Atanacak sefer sayısını tutacak haritayı/sözlüğü başlat
+    AtananSeferler = Yeni Sozluk()
+
+    // 2. Her bir planlanan sefer saati için döngü başlat
+    FOR Her bir saat IÇIN SeferSaatleri listesi içinde YAP
+        // A. Bu saate en yakın dersi olan öğrencileri bul
+        yakın\_ogrenci\_sayisi = 0
+        
+        // Bu adım kritik: Her öğrenciyi kontrol et
+        FOR Her bir ogrenci IÇIN OgrenciListesi listesi içinde YAP
+            // Öğrencinin ders saati ile mevcut sefer saati arasındaki farkı hesapla
+            fark = ZamanFarki(ogrenci.ders\_saati, saat)
+            
+            // Koşul: Fark belirli bir toleransın altındaysa (Örn: 15 dakika)
+            // VEYA bu saat, öğrencinin dersine giden en erken sefer ise
+            
+            IF fark >= 0 VE fark <= 15 Dakika VEYA BuSaatEnUygunSaat(ogrenci.ders\_saati, SeferSaatleri) THEN
+                yakın\_ogrenci\_sayisi = yakın\_ogrenci\_sayisi + 1
+            END IF
+        END FOR
+        
+        // B. Gerekli otobüs sayısını hesapla (Toplamsayının üstü bir rakam)
+        
+        // Gerekli Otobüs Sayısı = (Öğrenci Sayısı / MAX\_KAPASITE)'nin yukarı yuvarlanmış hali
+        otobus\_sayisi = YUKARI\_YUVARLA(yakın\_ogrenci\_sayisi / MAX\_KAPASITE)
+        
+        // Ekstra Otobüs Koşulu: En az 1 fazla otobüs gönder
+        IF otobus\_sayisi < yakın\_ogrenci\_sayisi / MAX\_KAPASITE + 1 THEN
+            // Örneğin: (70 öğrenci, 50 kapasite) -> 1.4 -> YUKARI\_YUVARLA(1.4) = 2 otobüs
+            // Kural: Toplam sayının üstü bir rakamda otobüs gönder
+            otobus\_sayisi = otobus\_sayisi + 1 
+            // Veya: otobus\_sayisi = YUKARI\_YUVARLA(yakın\_ogrenci\_sayisi / MAX\_KAPASITE) + 1  
+            // Ancak kapasiteye göre hesaplayıp 1 eklemek daha doğru olabilir. 
+            // Örneğin 1 öğrenci için 1+1=2 otobüs mantıksız olur. Kapasite hesaplaması esas alınmalı:
+        
+            // Eğer 1 otobüs yetiyorsa (örn: 40 kişi), 1+1=2 otobüs
+            // Eğer 2 otobüs yetiyorsa (örn: 70 kişi), 2+1=3 otobüs
+            
+            otobus\_sayisi = otobus\_sayisi + 1 
+            
+            // Koşullu Durum: Eğer hiçbir öğrenci yoksa (yakın\_ogrenci\_sayisi = 0), otobüs gönderme.
+            IF yakın\_ogrenci\_sayisi == 0 THEN
+                otobus\_sayisi = 0
+            END IF
+            
+        END IF
+
+        // C. Sonucu kaydet
+        AtananSeferler[saat] = otobus\_sayisi
+        
+    END FOR
+    
+    // 3. Sonuçları döndür
+    GERI\_DONDUR AtananSeferler
+
+SON PROSEDUR
