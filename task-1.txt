@@ -1,4 +1,57 @@
-Öğrenci No:
-AD-SOYAD:
+Öğrenci No: Hayat At
+AD-SOYAD: 250541055
 
 Lütfen seçtiğiniz algoritmaya ait çözümü ve diğer isterleri aşağıya ekleyiniz:
+Kod snippet'i
+
+    // **Ana Döngü: Sınav Tarihine Kadar İlerle**
+    DÖNGÜ GUNCEL_TARIH < SINAV_TARIHI OLDUĞU SÜRECE:
+        GUNLUK_CALISMA_BUTCESI = HEDEF_GUNLUK_SAAT * YOGUNLUK_CARPANI // Yoğunluk ayarı
+        GUNUN_PLANI = []
+        CALISILAN_SURE_SAYACI = 0
+
+        // **********************************************
+        // 3.1. Sınava Yakınlık Kontrolü (If-Else)
+        // **********************************************
+
+        EĞER SINAV_TARIHI - GUNCEL_TARIH <= 2 GÜN // Son 48 saat
+            EKLE(CALISMA_PLANI, GUNCEL_TARIH, "ZİHİNSEL DİNLENME", "Minimum Çalışma (Sadece Hata Tekrarı)")
+            GUNCEL_TARIH = GUNCEL_TARIH + 1 GÜN
+            DEVAM_ET // Döngünün başına dön
+
+        // **Deneme Sınavı Günü Kontrolü**
+        EĞER GUNCEL_TARIH Haftanın HAFTALIK_DENEME_SINAVI_GUNU İSE
+            EKLE(GUNUN_PLANI, "DENEME SINAVI ÇÖZÜMÜ", "4.0 saat")
+            EKLE(GUNUN_PLANI, "DENEME SINAVI HATA ANALİZİ", "2.0 saat")
+            GUNLUK_CALISMA_BUTCESI = 0 // Konu çalışmasını atla
+        // **********************************************
+        
+        // **Konu Dağıtım Döngüsü (Önceliklendirilmiş)**
+        // Konu listesini zorluk seviyesine göre (Yüksek > Orta > Düşük) sırala
+        SIRALI_KONU_LISTESI = SIRALA(KONU_LISTESI, KONU_ZORLUK_SEVIYELERI)
+
+        HER BIR KONU IÇIN SIRALI_KONU_LISTESI'NDE:
+            ZORLUK = KONU_ZORLUK_SEVIYELERI[KONU]
+            ATANACAK_SURE = GUNLUK_CALISMA_BUTCESI * ORANLAR[ZORLUK]
+            
+            // **Bütçe Aşımı Kontrolü**
+            EĞER CALISILAN_SURE_SAYACI + ATANACAK_SURE > GUNLUK_CALISMA_BUTCESI
+                ATANACAK_SURE = GUNLUK_CALISMA_BUTCESI - CALISILAN_SURE_SAYACI
+            
+            EĞER ATANACAK_SURE > 0
+                EKLE(GUNUN_PLANI, KONU, ATANACAK_SURE)
+                CALISILAN_SURE_SAYACI = CALISILAN_SURE_SAYACI + ATANACAK_SURE
+
+            EĞER CALISILAN_SURE_SAYACI >= GUNLUK_CALISMA_BUTCESI
+                KIR // Konu dağıtım döngüsünü sonlandır
+
+        // **Günlük Planı Ana Listeye Ekle**
+        EKLE(CALISMA_PLANI, GUNCEL_TARIH, GUNUN_PLANI, "Toplam Saat: " + CALISILAN_SURE_SAYACI)
+        GUNCEL_TARIH = GUNCEL_TARIH + 1 GÜN // Bir sonraki güne geç
+
+    DÖNGÜ_SONU
+
+// **********************************************
+// 4. Çıktı
+// **********************************************
+SONUC: CALISMA_PLANI'nı kişiselleştirilmiş bir takvim olarak sun.
