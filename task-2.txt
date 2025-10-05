@@ -1,5 +1,5 @@
-Öğrenci No:
-AD-SOYAD:
+Öğrenci No: Hayat Ay
+AD-SOYAD: 250541055
 
 Lütfen seçtiğiniz algoritmaya ait çözümü ve diğer isterleri aşağıya ekleyiniz:
 FONKSIYON EN_IYI_HAMLE_SECIMI():
